@@ -97,6 +97,35 @@ func TestRestoreConnectionLimitsPreserveExplicitZero(t *testing.T) {
 	}
 }
 
+func TestRestoreDNSRebindProtectionReachesFFI(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		var config RestoreConfig
+		WithRestoreDNSRebindProtection(enabled)(&config)
+		if err := validateRestoreConfig(config); err != nil {
+			t.Fatal(err)
+		}
+		encoded, err := json.Marshal(buildFFIRestoreOptions("baseline", config))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got map[string]any
+		if err := json.Unmarshal(encoded, &got); err != nil {
+			t.Fatal(err)
+		}
+		if got["dns_rebind_protection"] != enabled {
+			t.Fatalf("dns_rebind_protection lost: %s", encoded)
+		}
+	}
+
+	encoded, err := json.Marshal(buildFFIRestoreOptions("baseline", RestoreConfig{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "dns_rebind_protection") {
+		t.Fatalf("unset DNS rebind protection reached the wire: %s", encoded)
+	}
+}
+
 func TestRestorePublishedTCPConfigurationReachesFFI(t *testing.T) {
 	var config RestoreConfig
 	WithRestoreTCPAcceptQueueSize(4096)(&config)

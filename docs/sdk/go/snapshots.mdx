@@ -937,6 +937,7 @@ Restore rejects missing external filesystems (and, for full restore, additional 
 | `WithRestoreCPUs, WithRestoreMemory` | CPU count and memory in MiB. Full restore must match capture. |
 | `WithRestoreNetworkPolicy` | Replace host traffic filtering; guest DNS and TLS settings stay unchanged. |
 | `WithRestoreMaxConnections` | Concurrent TCP limit; zero means unlimited. |
+| `WithRestoreDNSRebindProtection` | Enable or disable DNS rebind protection. Omitted uses the default (enabled), not the source sandbox's setting. |
 | `WithRestoreDisableNetwork` | Remove the NIC. Rejected for full snapshots that captured one. |
 | `WithRestoreSecurityProfile` | Guest security profile. Disk boot only, including an explicit default profile. |
 | `WithRestoreMaxDuration, WithRestoreIdleTimeout` | Lifetime and idle limits. Omitted means unlimited; zero expires immediately. |
