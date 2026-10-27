@@ -149,6 +149,17 @@ impl RestoreBuilder {
         self.max_tcp_connections(limit)
     }
 
+    /// Enable or disable DNS rebind protection on the destination host's resolver.
+    /// With protection off, a hostname may resolve to a private address and the network policy
+    /// decides. Omitted uses the default (enabled), not the source sandbox's setting.
+    #[cfg(feature = "net")]
+    pub fn dns_rebind_protection(mut self, enabled: bool) -> Self {
+        self.inner = self
+            .inner
+            .network(|network| network.dns(|dns| dns.rebind_protection(enabled)));
+        self
+    }
+
     /// Disable the network device for disk boot. Full restore rejects removal of a captured device.
     #[cfg(feature = "net")]
     pub fn disable_network(mut self) -> Self {
@@ -489,6 +500,21 @@ mod tests {
                 .unwrap()
                 .max_udp_connections,
             Some(microsandbox_network::config::ConnectionLimit::Unlimited)
+        );
+        let unprotected = Sandbox::restore("saved").dns_rebind_protection(false);
+        assert!(
+            config(&Sandbox::restore("saved"))
+                .spec
+                .network
+                .dns
+                .is_none()
+        );
+        assert!(
+            !config(&unprotected)
+                .local_network_config()
+                .unwrap()
+                .dns
+                .rebind_protection
         );
         let disabled = Sandbox::restore("saved").name("child").disable_network();
         assert!(!config(&disabled).spec.network.enabled);

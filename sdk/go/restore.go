@@ -27,6 +27,8 @@ type RestoreConfig struct {
 	// MaxUDPConnections caps destination UDP relay sessions; zero means unlimited.
 	MaxUDPConnections *uint
 	DisableNetwork    bool
+	// DNSRebindProtection overrides the destination resolver's rebind protection; nil keeps the default (enabled).
+	DNSRebindProtection *bool
 	// Explicit guest security requires disk scope or SnapshotDiskOnly.
 	SecurityProfile SecurityProfile
 	// Nil omits a lifetime override; explicit zero requests immediate expiry.
@@ -108,6 +110,12 @@ func WithRestoreMaxTCPConnections(count uint) RestoreOption {
 // WithRestoreMaxUDPConnections caps destination UDP relay sessions. Zero means unlimited.
 func WithRestoreMaxUDPConnections(count uint) RestoreOption {
 	return func(o *RestoreConfig) { o.MaxUDPConnections = &count }
+}
+
+// WithRestoreDNSRebindProtection enables or disables DNS rebind protection on the destination.
+// Disable it to let hostnames resolve to private addresses, with the network policy deciding.
+func WithRestoreDNSRebindProtection(enabled bool) RestoreOption {
+	return func(o *RestoreConfig) { o.DNSRebindProtection = &enabled }
 }
 
 // WithRestoreMaxInboundTCPConnections caps active inbound TCP connections; zero is unlimited.
@@ -211,7 +219,7 @@ func buildFFIRestoreOptions[T SnapshotSeed](snapshot T, config RestoreConfig) ff
 		Snapshot: reference, SnapshotReferenceKind: referenceKind,
 		CPUs: config.CPUs, MemoryMiB: config.MemoryMiB, NetworkPolicy: policy,
 		MaxConnections: config.MaxConnections, MaxTCPConnections: config.MaxTCPConnections,
-		MaxUDPConnections: config.MaxUDPConnections, DisableNetwork: config.DisableNetwork,
+		MaxUDPConnections: config.MaxUDPConnections, DisableNetwork: config.DisableNetwork, DNSRebindProtection: config.DNSRebindProtection,
 		SecurityProfile: string(config.SecurityProfile),
 		MaxDurationSecs: seconds(config.MaxDuration), IdleTimeoutSecs: seconds(config.IdleTimeout),
 		// Keep the native wire spelling stable across SDK/runtime versions.
