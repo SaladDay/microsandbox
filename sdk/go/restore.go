@@ -29,6 +29,8 @@ type RestoreConfig struct {
 	DisableNetwork    bool
 	// DNSRebindProtection overrides the destination resolver's rebind protection; nil keeps the default (enabled).
 	DNSRebindProtection *bool
+	// Strict overrides strict hostname policy enforcement on the destination; nil keeps the default (enabled).
+	Strict *bool
 	// Explicit guest security requires disk scope or SnapshotDiskOnly.
 	SecurityProfile SecurityProfile
 	// Nil omits a lifetime override; explicit zero requests immediate expiry.
@@ -116,6 +118,12 @@ func WithRestoreMaxUDPConnections(count uint) RestoreOption {
 // Disable it to let hostnames resolve to private addresses, with the network policy deciding.
 func WithRestoreDNSRebindProtection(enabled bool) RestoreOption {
 	return func(o *RestoreConfig) { o.DNSRebindProtection = &enabled }
+}
+
+// WithRestoreStrict enables or disables strict hostname policy enforcement on the destination.
+// Disable it to let hostname allows admit HTTPS without TLS interception.
+func WithRestoreStrict(enabled bool) RestoreOption {
+	return func(o *RestoreConfig) { o.Strict = &enabled }
 }
 
 // WithRestoreMaxInboundTCPConnections caps active inbound TCP connections; zero is unlimited.
@@ -219,7 +227,7 @@ func buildFFIRestoreOptions[T SnapshotSeed](snapshot T, config RestoreConfig) ff
 		Snapshot: reference, SnapshotReferenceKind: referenceKind,
 		CPUs: config.CPUs, MemoryMiB: config.MemoryMiB, NetworkPolicy: policy,
 		MaxConnections: config.MaxConnections, MaxTCPConnections: config.MaxTCPConnections,
-		MaxUDPConnections: config.MaxUDPConnections, DisableNetwork: config.DisableNetwork, DNSRebindProtection: config.DNSRebindProtection,
+		MaxUDPConnections: config.MaxUDPConnections, DisableNetwork: config.DisableNetwork, DNSRebindProtection: config.DNSRebindProtection, Strict: config.Strict,
 		SecurityProfile: string(config.SecurityProfile),
 		MaxDurationSecs: seconds(config.MaxDuration), IdleTimeoutSecs: seconds(config.IdleTimeout),
 		// Keep the native wire spelling stable across SDK/runtime versions.

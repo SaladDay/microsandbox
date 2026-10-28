@@ -29,6 +29,7 @@ struct RestoreOptions {
     max_tcp_connections: Option<usize>,
     max_udp_connections: Option<usize>,
     dns_rebind_protection: Option<bool>,
+    strict: Option<bool>,
     #[serde(default)]
     disable_network: bool,
     security_profile: Option<String>,
@@ -114,6 +115,9 @@ fn builder(name: String, opts: &RestoreOptions) -> Result<RestoreBuilder, FfiErr
     }
     if let Some(enabled) = opts.dns_rebind_protection {
         builder = builder.dns_rebind_protection(enabled);
+    }
+    if let Some(enabled) = opts.strict {
+        builder = builder.strict(enabled);
     }
     if opts.disable_network {
         builder = builder.disable_network();
@@ -304,6 +308,21 @@ mod tests {
         }))
         .unwrap();
         assert_eq!(options.dns_rebind_protection, Some(false));
+        assert!(builder("destination".into(), &options).is_ok());
+    }
+
+    #[test]
+    fn restore_strict_is_optional_and_reaches_the_builder() {
+        let omitted: RestoreOptions =
+            serde_json::from_value(serde_json::json!({"snapshot": "saved"})).unwrap();
+        assert_eq!(omitted.strict, None);
+
+        let options: RestoreOptions = serde_json::from_value(serde_json::json!({
+            "snapshot": "saved",
+            "strict": false,
+        }))
+        .unwrap();
+        assert_eq!(options.strict, Some(false));
         assert!(builder("destination".into(), &options).is_ok());
     }
 

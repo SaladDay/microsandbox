@@ -1117,6 +1117,14 @@ fn dns_rebind_protection(self, enabled: bool) -> Self
 
 Enable or disable DNS rebind protection on the restored sandbox. Omitted uses the default (enabled), not the source sandbox's setting.
 
+#### <span className="msb-recv">restore.</span><span className="msb-hn">strict()</span>
+
+```rust
+fn strict(self, enabled: bool) -> Self
+```
+
+Enable or disable strict hostname policy enforcement on the restored sandbox. Omitted uses the default (enabled), not the source sandbox's setting.
+
 #### <span className="msb-recv">restore.</span><span className="msb-hn">volume()</span>
 
 ```rust

@@ -142,6 +142,15 @@ impl RestoreBuilder {
         self
     }
 
+    /// Enable or disable strict hostname policy enforcement on the destination.
+    /// Under strict mode a domain allow admits HTTPS only with TLS interception. Omitted uses the
+    /// default (enabled), not the source sandbox's setting.
+    #[cfg(feature = "net")]
+    pub fn strict(mut self, enabled: bool) -> Self {
+        self.inner = self.inner.network(|network| network.strict(enabled));
+        self
+    }
+
     /// Deprecated alias for [`Self::max_tcp_connections`].
     #[cfg(feature = "net")]
     #[deprecated(note = "use max_tcp_connections instead")]
@@ -516,6 +525,14 @@ mod tests {
                 .dns
                 .rebind_protection
         );
+        let relaxed = Sandbox::restore("saved").strict(false);
+        assert!(
+            config(&Sandbox::restore("saved"))
+                .local_network_config()
+                .unwrap()
+                .strict
+        );
+        assert!(!config(&relaxed).local_network_config().unwrap().strict);
         let disabled = Sandbox::restore("saved").name("child").disable_network();
         assert!(!config(&disabled).spec.network.enabled);
     }

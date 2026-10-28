@@ -996,6 +996,14 @@ func WithRestoreDNSRebindProtection(enabled bool) RestoreOption
 
 Enable or disable DNS rebind protection on the restored sandbox. Omitted uses the default (enabled), not the source sandbox's setting. `RestoreConfig.DNSRebindProtection` sets the same value.
 
+#### <span className="msb-hn">WithRestoreStrict()</span>
+
+```go
+func WithRestoreStrict(enabled bool) RestoreOption
+```
+
+Enable or disable strict hostname policy enforcement on the restored sandbox. Omitted uses the default (enabled), not the source sandbox's setting. `RestoreConfig.Strict` sets the same value.
+
 
 <span id="disk-maintenance-and-incremental-export" />
 
