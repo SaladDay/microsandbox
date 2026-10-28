@@ -1,0 +1,144 @@
+# Fork-only: a tag oac-* builds the Linux amd64 Go FFI and runtime archive the same way
+# release.yml / release-linux.yml do and attaches them, with their sha256 files, to a
+# release of that tag. The kernel is not built: libkrunfw is the official v0.7.11 asset,
+# pinned by sha256 below.
+name: OAC Release
+
+on:
+  push:
+    tags: ["oac-*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NET_RETRY: "10"
+  CARGO_INCREMENTAL: "0"
+  FFI_ASSET: libmicrosandbox_go_ffi-linux-amd64.so
+  RUNTIME_ASSET: microsandbox-linux-x86_64.tar.gz
+  LIBKRUNFW_FILE: libkrunfw.so.5.6.1
+  LIBKRUNFW_URL: https://github.com/superradcompany/microsandbox/releases/download/v0.7.11/libkrunfw-linux-x86_64.so
+  # From the v0.7.11 release checksums.sha256 (libkrunfw-linux-x86_64.so).
+  LIBKRUNFW_SHA256: 3854efcd3fe625528fa00207d97586d9790db8c436bb6881a43986604336d18e
+
+jobs:
+  agentd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+        with:
+          targets: x86_64-unknown-linux-musl
+
+      - name: Install musl toolchain
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - name: Build agentd
+        run: cargo build --release --manifest-path crates/agentd/Cargo.toml --target x86_64-unknown-linux-musl
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: agentd
+          path: target/x86_64-unknown-linux-musl/release/agentd
+          compression-level: 0
+
+  runtime:
+    needs: agentd
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64@sha256:0c87ccb5996dab6c3b7612ee4fda7b80c4ab3c44a86c2541e4a872afdf4f131b
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+
+      - name: Install build dependencies
+        run: dnf install -y libcap-ng-devel
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: agentd
+          path: build/
+
+      - name: Fetch and verify libkrunfw
+        run: |
+          curl -fsSL --retry 5 -o "build/$LIBKRUNFW_FILE" "$LIBKRUNFW_URL"
+          echo "$LIBKRUNFW_SHA256  build/$LIBKRUNFW_FILE" | sha256sum -c -
+          (cd build && ln -sf "$LIBKRUNFW_FILE" libkrunfw.so.5 && ln -sf libkrunfw.so.5 libkrunfw.so)
+
+      - name: Build msb
+        run: |
+          cargo build --release --no-default-features --features embed-binaries,net,ssh -p microsandbox-cli
+          cp target/release/msb build/msb
+
+      - name: Verify runtime and glibc baseline
+        run: |
+          build/msb --version
+          python3 scripts/ci/validate_linux_glibc.py --max-version 2.28 build/agentd build/msb "build/$LIBKRUNFW_FILE"
+
+      - name: Smoke test installed runtime discovery
+        run: python3 scripts/smoke/cli/runtime-discovery.py --msb build/msb --libkrunfw "build/$LIBKRUNFW_FILE"
+
+      - name: Package runtime archive
+        run: |
+          mkdir dist
+          tar -czf "dist/$RUNTIME_ASSET" -C build msb "$LIBKRUNFW_FILE"
+          (cd dist && sha256sum "$RUNTIME_ASSET" > "$RUNTIME_ASSET.sha256")
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: runtime
+          path: dist/
+          compression-level: 0
+
+  ffi:
+    runs-on: ubuntu-latest
+    container:
+      image: quay.io/pypa/manylinux_2_28_x86_64@sha256:0c87ccb5996dab6c3b7612ee4fda7b80c4ab3c44a86c2541e4a872afdf4f131b
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
+
+      - name: Install build dependencies
+        run: dnf install -y libcap-ng-devel
+
+      - name: Build and validate Go FFI
+        run: |
+          cargo build --release -p microsandbox-go
+          python3 scripts/ci/validate_linux_glibc.py --max-version 2.28 target/release/libmicrosandbox_go_ffi.so
+          mkdir dist
+          cp target/release/libmicrosandbox_go_ffi.so "dist/$FFI_ASSET"
+          (cd dist && sha256sum "$FFI_ASSET" > "$FFI_ASSET.sha256")
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: go-ffi
+          path: dist/
+          compression-level: 0
+
+  release:
+    needs: [runtime, ffi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: go-ffi
+          path: dist/
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: runtime
+          path: dist/
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --verify-tag --title "$GITHUB_REF_NAME" --notes "Go FFI and runtime built from $GITHUB_SHA."
