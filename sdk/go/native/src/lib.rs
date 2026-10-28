@@ -1759,6 +1759,13 @@ fn parse_destination(
         Some("metadata") => Destination::Group(DestinationGroup::Metadata),
         Some("multicast") => Destination::Group(DestinationGroup::Multicast),
         Some("host") => Destination::Group(DestinationGroup::Host),
+        Some(s) if s.starts_with("subdomain=") => {
+            let raw = &s["subdomain=".len()..];
+            let name = raw.parse().map_err(|e| {
+                FfiError::invalid_argument(format!("invalid subdomain {raw:?}: {e}"))
+            })?;
+            Destination::Subdomain(name)
+        }
         Some(s) if s.starts_with('.') => {
             let name = s.parse().map_err(|e| {
                 FfiError::invalid_argument(format!("invalid domain suffix {s:?}: {e}"))
@@ -8451,6 +8458,20 @@ mod tests {
             }
             other => panic!("expected domain destination, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn parse_destination_subdomain_is_strict() {
+        let destination = parse_destination(Some("subdomain=Example.com"))
+            .unwrap_or_else(|e| panic!("{}", e.message));
+
+        match destination {
+            microsandbox_network::policy::Destination::Subdomain(name) => {
+                assert_eq!(name.as_str(), "example.com");
+            }
+            other => panic!("expected subdomain destination, got {other:?}"),
+        }
+        assert!(parse_destination(Some("subdomain=")).is_err());
     }
 
     #[test]

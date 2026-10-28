@@ -3134,7 +3134,7 @@ pub enum DestinationGroup {
 
 /// Traffic destination filter for a [`Rule`].
 ///
-/// The `Cidr`, `Domain`, and `DomainSuffix` leaves carry their canonical
+/// The `Cidr`, `Domain`, `DomainSuffix`, and `Subdomain` leaves carry their canonical
 /// string form (e.g. `"10.0.0.0/8"`, `"example.com"`); the local network
 /// engine re-parses and validates them into its richer internal types at
 /// load time.
@@ -3152,6 +3152,8 @@ pub enum Destination {
     Domain(String),
     /// Domain suffix — the apex and any subdomain of it.
     DomainSuffix(String),
+    /// Strict subdomain — any name below it, never the name itself.
+    Subdomain(String),
     /// A pre-defined destination group.
     Group(DestinationGroup),
 }

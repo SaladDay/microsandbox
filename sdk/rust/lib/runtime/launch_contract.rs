@@ -184,7 +184,9 @@ impl LaunchContract {
                     && matches!(rule.direction, Direction::Egress | Direction::Any)
                     && matches!(
                         rule.destination,
-                        Destination::Domain(_) | Destination::DomainSuffix(_)
+                        Destination::Domain(_)
+                            | Destination::DomainSuffix(_)
+                            | Destination::Subdomain(_)
                     )
             })
         {
@@ -2402,6 +2404,7 @@ mod protocol {
             Destination::Cidr("203.0.113.0/24".parse().unwrap()),
             Destination::Domain("example.com".parse().unwrap()),
             Destination::DomainSuffix("example.com".parse().unwrap()),
+            Destination::Subdomain("example.com".parse().unwrap()),
         ] {
             for direction in [Direction::Ingress, Direction::Egress, Direction::Any] {
                 for action in [Action::Allow, Action::Deny] {
@@ -2427,7 +2430,9 @@ mod protocol {
                             && direction != Direction::Ingress
                             && matches!(
                                 destination,
-                                Destination::Domain(_) | Destination::DomainSuffix(_)
+                                Destination::Domain(_)
+                                    | Destination::DomainSuffix(_)
+                                    | Destination::Subdomain(_)
                             );
                         for patch in 0..=18 {
                             let result = encode(

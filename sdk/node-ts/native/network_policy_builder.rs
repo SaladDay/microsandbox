@@ -621,7 +621,8 @@ pub struct NetworkPolicyRule {
 #[derive(Clone)]
 #[napi(object)]
 pub struct NetworkPolicyDestination {
-    /// `"any" | "cidr" | "domain" | "domainSuffix" | "group"`.
+    /// `"any" | "cidr" | "domain" | "domainSuffix" | "subdomain" | "group"`.
+    /// A `"subdomain"` carries its name in `domain`.
     pub kind: String,
     pub cidr: Option<String>,
     pub domain: Option<String>,
@@ -860,6 +861,11 @@ fn rust_policy_to_js(p: RustNetworkPolicy) -> NetworkPolicy {
         RustDestination::DomainSuffix(name) => NetworkPolicyDestination {
             kind: "domainSuffix".to_string(),
             suffix: Some(name.as_str().to_string()),
+            ..blank_dest()
+        },
+        RustDestination::Subdomain(name) => NetworkPolicyDestination {
+            kind: "subdomain".to_string(),
+            domain: Some(name.as_str().to_string()),
             ..blank_dest()
         },
         RustDestination::Group(g) => NetworkPolicyDestination {

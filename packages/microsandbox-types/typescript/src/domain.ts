@@ -199,7 +199,7 @@ export type Protocol = "tcp" | "udp" | "icmpv4" | "icmpv6";
 
 export type Destination = "any" | { "cidr": string } | { "domain": string } | {
   "domain_suffix": string;
-} | { "group": DestinationGroup };
+} | { "subdomain": string } | { "group": DestinationGroup };
 
 export type DestinationGroup =
   | "public"

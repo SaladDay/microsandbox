@@ -10,7 +10,7 @@
 //! <action>    := allow | deny
 //! <direction> := egress | ingress | any                    (default: egress)
 //! <target>    := any | dns | <group> | <ipv4> | [<ipv6>] | <cidr> | [<ipv6-cidr>]
-//!              | <fqdn> | domain=<name> | suffix=<domain>
+//!              | <fqdn> | domain=<name> | suffix=<domain> | subdomain=<domain>
 //! <group>     := public | private | loopback | link-local | meta | multicast | host
 //! <proto>     := any | tcp | udp | icmpv4 | icmpv6
 //! <ports>     := any | <port> | <lo>-<hi>
@@ -454,6 +454,12 @@ fn parse_target(raw: &str) -> Result<Destination, RuleParseError> {
         return Ok(Destination::DomainSuffix(name));
     }
 
+    // `subdomain=<name>`: like `suffix=`, but never the name itself.
+    if let Some(rest) = raw.strip_prefix("subdomain=") {
+        let name = parse_domain_suffix(rest)?;
+        return Ok(Destination::Subdomain(name));
+    }
+
     // 7. `domain=<name>` (escape hatch)
     if let Some(rest) = raw.strip_prefix("domain=") {
         let name = DomainName::from_str(rest).map_err(|source| RuleParseError::InvalidDomain {
@@ -776,6 +782,15 @@ mod tests {
         match r.destination {
             Destination::DomainSuffix(name) => assert_eq!(name.as_str(), "corp.internal"),
             other => panic!("expected DomainSuffix, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn subdomain_prefix_explicit() {
+        let r = parse_rule_token("allow@subdomain=corp.internal").unwrap();
+        match r.destination {
+            Destination::Subdomain(name) => assert_eq!(name.as_str(), "corp.internal"),
+            other => panic!("expected Subdomain, got {other:?}"),
         }
     }
 

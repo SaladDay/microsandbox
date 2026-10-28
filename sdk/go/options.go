@@ -1328,8 +1328,9 @@ type PolicyRule struct {
 	Direction   PolicyDirection
 	Destination string // "*", "loopback", "private", "link-local", "metadata",
 	// "multicast", "public", "host", an IP ("1.1.1.1"), a CIDR
-	// ("10.0.0.0/8"), a domain suffix (".internal"), or a plain domain
-	// ("api.example.com").
+	// ("10.0.0.0/8"), a domain suffix (".internal", apex included), a
+	// strict subdomain ("subdomain=internal", apex excluded), or a plain
+	// domain ("api.example.com").
 
 	// Protocol is the legacy single-protocol field. Prefer Protocols when
 	// matching multiple. The empty string means any.
