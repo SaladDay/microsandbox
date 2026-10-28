@@ -210,6 +210,28 @@ describe("NetworkPolicyBuilder", () => {
     expect(() => npb.build()).toThrow(/invalid IP/i);
   });
 
+  it("subdomain shortcuts and explicit destination commit subdomain rules", () => {
+    const p = NetworkPolicy.builder()
+      .egress((e) =>
+        e
+          .denySubdomain("ads.example.com")
+          .allowSubdomains(["example.com", "example.org"])
+          .deny((d) => d.subdomain("example.net")),
+      )
+      .build();
+    expect(p.rules.map((r) => [r.action, r.destination])).toEqual([
+      ["deny", { kind: "subdomain", subdomain: "ads.example.com" }],
+      ["allow", { kind: "subdomain", subdomain: "example.com" }],
+      ["allow", { kind: "subdomain", subdomain: "example.org" }],
+      ["deny", { kind: "subdomain", subdomain: "example.net" }],
+    ]);
+  });
+
+  it("single-label subdomain surfaces at .build()", () => {
+    const npb = NetworkPolicy.builder().egress((e) => e.denySubdomains(["com"]));
+    expect(() => npb.build()).toThrow(/invalid domain `com`/);
+  });
+
   it("invalid port range surfaces at .build()", () => {
     const npb = NetworkPolicy.builder().egress((e) =>
       e.tcp().portRange(443, 80).allowPublic(),

@@ -399,7 +399,6 @@ The full network stack configuration passed via [`WithNetwork`](#m-withnetwork).
 | DefaultIngress | [`PolicyAction`](#policyaction) | Fall-through action for inbound when no rule matches. Defaults to `"allow"` |
 | DenyDomains | `[]string` | Exact domain names to refuse DNS resolution for |
 | DenyDomainSuffixes | `[]string` | Domain suffixes (e.g. `.ads`) to block, including the apex and any subdomain |
-| DenySubdomains | `[]string` | Domains (e.g. `ads.example`) whose subdomains are blocked, never the domain itself |
 | DNS | [`*DNSConfig`](#dnsconfig) | In-VM DNS proxy settings |
 | DNSRebindProtection | `*bool` | Legacy convenience for `DNS.RebindProtection`. When `DNS` is also set, the nested value wins |
 | TLS | [`*TLSConfig`](#tlsconfig) | Transparent TLS interception proxy settings |
@@ -426,6 +425,14 @@ For dedicated snapshot restore, use `WithRestoreMaxTCPConnections` and `WithRest
 `WithRestoreTCPAcceptQueueSize` (or `RestoreConfig.TCPAcceptQueueSize`) sets the accept-queue depth for the listeners a restored child publishes.
 
 Historical runtime launch contracts reject explicit UDP limits, including zero, with an upgrade-required error. See [deployment profiles](/networking/overview#connection-limits) for historical TCP limits and defaults.
+
+#### DenySubdomains
+
+```go
+DenySubdomains []string
+```
+
+Domains whose subdomains are blocked, never the domain itself: `ads.example` blocks `x.ads.example` but not `ads.example`. Use `DenyDomainSuffixes` to block both.
 
 #### MaxInboundTCPConnections
 
