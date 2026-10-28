@@ -138,6 +138,10 @@ describe("Destination factory", () => {
       kind: "domainSuffix",
       suffix: "example.com",
     });
+    expect(Destination.subdomain("example.com")).toEqual({
+      kind: "subdomain",
+      subdomain: "example.com",
+    });
     expect(Destination.group("metadata")).toEqual({
       kind: "group",
       group: "metadata",
