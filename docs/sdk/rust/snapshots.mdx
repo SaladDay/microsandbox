@@ -1132,6 +1132,8 @@ Omitted settings use destination defaults, not the source sandbox's settings. `n
 <Accordion title="Example">
 
 ```rust
+use microsandbox::{NetworkPolicy, NetworkProfile, Sandbox};
+
 let child = Sandbox::restore("api:baseline")
     .name("api-restored")
     .network(|n| {
