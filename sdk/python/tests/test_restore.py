@@ -167,7 +167,7 @@ async def test_restore_network_scope_reaches_artifact_validation(tmp_path, metho
     # A missing artifact proves the scope is accepted and reaches restore, never fresh creation.
     network = RestoreNetwork(
         policy=NetworkPolicy.none(), max_tcp_connections=0, max_udp_connections=7,
-        dns_rebind_protection=False,
+        dns_rebind_protection=False, strict=False,
     )
     with pytest.raises(FileNotFoundError):
         result = getattr(Sandbox, method)(

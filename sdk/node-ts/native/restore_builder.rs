@@ -32,6 +32,7 @@ pub struct JsRestoreNetworkBuilder {
     max_tcp_connections: Option<usize>,
     max_udp_connections: Option<usize>,
     dns_rebind_protection: Option<bool>,
+    strict: Option<bool>,
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -470,6 +471,13 @@ impl JsRestoreNetworkBuilder {
         self.dns_rebind_protection = Some(enabled);
         self
     }
+
+    /// Enable or disable strict hostname policy enforcement on the destination.
+    #[napi]
+    pub fn strict(&mut self, enabled: bool) -> &Self {
+        self.strict = Some(enabled);
+        self
+    }
 }
 
 impl JsRestoreNetworkBuilder {
@@ -486,6 +494,9 @@ impl JsRestoreNetworkBuilder {
         }
         if let Some(enabled) = self.dns_rebind_protection {
             network = network.dns_rebind_protection(enabled);
+        }
+        if let Some(enabled) = self.strict {
+            network = network.strict(enabled);
         }
         network
     }

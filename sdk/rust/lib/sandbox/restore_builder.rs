@@ -271,6 +271,12 @@ impl RestoreNetworkBuilder {
     pub fn dns_rebind_protection(self, enabled: bool) -> Self {
         Self(self.0.dns(|dns| dns.rebind_protection(enabled)))
     }
+
+    /// Enable or disable strict hostname policy enforcement on the destination. Under strict
+    /// mode a domain allow admits HTTPS only with TLS interception.
+    pub fn strict(self, enabled: bool) -> Self {
+        Self(self.0.strict(enabled))
+    }
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -559,6 +565,14 @@ mod tests {
                 .dns
                 .rebind_protection
         );
+        let relaxed = Sandbox::restore("saved").network(|network| network.strict(false));
+        assert!(
+            config(&Sandbox::restore("saved"))
+                .local_network_config()
+                .unwrap()
+                .strict
+        );
+        assert!(!config(&relaxed).local_network_config().unwrap().strict);
         let disabled = Sandbox::restore("saved").name("child").disable_network();
         assert!(!config(&disabled).spec.network.enabled);
     }

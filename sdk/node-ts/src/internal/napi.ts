@@ -325,6 +325,8 @@ export interface NapiRestoreNetworkBuilderSetters {
   maxUdpConnections(count: number): this;
   /** Omission uses the default (enabled), not the source sandbox's setting. */
   dnsRebindProtection(enabled: boolean): this;
+  /** Omission uses the default (enabled), not the source sandbox's setting. */
+  strict(enabled: boolean): this;
 }
 
 export interface NapiRestoreNetworkBuilder extends NapiRestoreNetworkBuilderSetters {

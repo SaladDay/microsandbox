@@ -309,6 +309,7 @@ pub(crate) fn restore_builder_from_args(
         let tcp = extract_opt::<usize>(&scope, "max_tcp_connections")?;
         let udp = extract_opt::<usize>(&scope, "max_udp_connections")?;
         let dns_rebind_protection = extract_opt::<bool>(&scope, "dns_rebind_protection")?;
+        let strict = extract_opt::<bool>(&scope, "strict")?;
         builder = builder.network(|mut network| {
             if let Some(policy) = policy {
                 network = network.policy(policy);
@@ -321,6 +322,9 @@ pub(crate) fn restore_builder_from_args(
             }
             if let Some(enabled) = dns_rebind_protection {
                 network = network.dns_rebind_protection(enabled);
+            }
+            if let Some(enabled) = strict {
+                network = network.strict(enabled);
             }
             network
         });

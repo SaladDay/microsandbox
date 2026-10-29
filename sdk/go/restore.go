@@ -29,6 +29,8 @@ type RestoreConfig struct {
 	DisableNetwork    bool
 	// DNSRebindProtection overrides the destination resolver's rebind protection; nil keeps the default (enabled).
 	DNSRebindProtection *bool
+	// Strict overrides strict hostname policy enforcement on the destination; nil keeps the default (enabled).
+	Strict *bool
 	// Explicit guest security requires disk scope or SnapshotDiskOnly.
 	SecurityProfile SecurityProfile
 	// Nil omits a lifetime override; explicit zero requests immediate expiry.
@@ -70,6 +72,9 @@ type RestoreNetworkOptions struct {
 	// DNSRebindProtection enables or disables rebind protection on the destination resolver.
 	// Disable it to let hostnames resolve to private addresses, with the policy deciding.
 	DNSRebindProtection *bool
+	// Strict enables or disables strict hostname policy enforcement on the destination.
+	// Disable it to let hostname allows admit HTTPS without TLS interception.
+	Strict *bool
 }
 
 // RestoreSandbox restores an installed snapshot or archive into a detached sandbox.
@@ -141,6 +146,9 @@ func WithRestoreNetwork(network RestoreNetworkOptions) RestoreOption {
 		}
 		if network.DNSRebindProtection != nil {
 			o.DNSRebindProtection = network.DNSRebindProtection
+		}
+		if network.Strict != nil {
+			o.Strict = network.Strict
 		}
 	}
 }
@@ -246,7 +254,7 @@ func buildFFIRestoreOptions[T SnapshotSeed](snapshot T, config RestoreConfig) ff
 		Snapshot: reference, SnapshotReferenceKind: referenceKind,
 		CPUs: config.CPUs, MemoryMiB: config.MemoryMiB, NetworkPolicy: policy,
 		MaxConnections: config.MaxConnections, MaxTCPConnections: config.MaxTCPConnections,
-		MaxUDPConnections: config.MaxUDPConnections, DisableNetwork: config.DisableNetwork, DNSRebindProtection: config.DNSRebindProtection,
+		MaxUDPConnections: config.MaxUDPConnections, DisableNetwork: config.DisableNetwork, DNSRebindProtection: config.DNSRebindProtection, Strict: config.Strict,
 		SecurityProfile: string(config.SecurityProfile),
 		MaxDurationSecs: seconds(config.MaxDuration), IdleTimeoutSecs: seconds(config.IdleTimeout),
 		// Keep the native wire spelling stable across SDK/runtime versions.

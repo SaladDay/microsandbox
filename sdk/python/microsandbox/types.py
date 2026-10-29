@@ -1991,6 +1991,10 @@ class RestoreNetwork:
     """DNS rebind protection on the destination resolver. Defaults to enabled;
     disable it to let hostnames resolve to private addresses, with the policy
     deciding."""
+    strict: bool | None = None
+    """Strict hostname policy enforcement on the destination. Defaults to
+    enabled; disable it to let hostname allows admit HTTPS without TLS
+    interception."""
 
     def _to_dict(self) -> dict:
         d: dict = {}
@@ -2004,6 +2008,8 @@ class RestoreNetwork:
             d["max_udp_connections"] = self.max_udp_connections
         if self.dns_rebind_protection is not None:
             d["dns_rebind_protection"] = self.dns_rebind_protection
+        if self.strict is not None:
+            d["strict"] = self.strict
         return d
 
 

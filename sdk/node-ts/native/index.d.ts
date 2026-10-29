@@ -896,6 +896,8 @@ export declare class RestoreNetworkBuilder {
   maxUdpConnections(count: number): this
   /** Enable or disable DNS rebind protection on the destination host's resolver. */
   dnsRebindProtection(enabled: boolean): this
+  /** Enable or disable strict hostname policy enforcement on the destination. */
+  strict(enabled: boolean): this
 }
 export type JsRestoreNetworkBuilder = RestoreNetworkBuilder
 

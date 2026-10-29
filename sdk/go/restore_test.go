@@ -144,6 +144,35 @@ func TestRestoreDNSRebindProtectionReachesFFI(t *testing.T) {
 	}
 }
 
+func TestRestoreStrictReachesFFI(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		var config RestoreConfig
+		WithRestoreNetwork(RestoreNetworkOptions{Strict: &enabled})(&config)
+		if err := validateRestoreConfig(config); err != nil {
+			t.Fatal(err)
+		}
+		encoded, err := json.Marshal(buildFFIRestoreOptions("baseline", config))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var got map[string]any
+		if err := json.Unmarshal(encoded, &got); err != nil {
+			t.Fatal(err)
+		}
+		if got["strict"] != enabled {
+			t.Fatalf("strict lost: %s", encoded)
+		}
+	}
+
+	encoded, err := json.Marshal(buildFFIRestoreOptions("baseline", RestoreConfig{}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(encoded), "strict") {
+		t.Fatalf("unset strict reached the wire: %s", encoded)
+	}
+}
+
 func TestRestorePublishedTCPConfigurationReachesFFI(t *testing.T) {
 	var config RestoreConfig
 	WithRestoreTCPAcceptQueueSize(4096)(&config)

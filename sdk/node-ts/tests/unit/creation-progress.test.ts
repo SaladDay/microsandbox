@@ -55,6 +55,7 @@ vi.mock("../../dist/internal/napi.js", () => {
             maxTcpConnections: (value: number) => { native.controls("maxTcpConnections", value); return scope; },
             maxUdpConnections: (value: number) => { native.controls("maxUdpConnections", value); return scope; },
             dnsRebindProtection: (value: boolean) => { native.controls("dnsRebindProtection", value); return scope; },
+            strict: (value: boolean) => { native.controls("strict", value); return scope; },
           };
           configure(scope);
           return this;
@@ -125,12 +126,12 @@ describe("creation result lifecycle ownership", () => {
     it(`${method} applies the network scope as the flat setters do and forwards DNS rebind protection`, async () => {
       const policy = { defaultEgress: "deny" as const, defaultIngress: "deny" as const, rules: [] };
       const builder = Sandbox.restore("baseline").name("destination")
-        .network((n) => n.policy(policy).maxTcpConnections(0).maxUdpConnections(7).dnsRebindProtection(false));
+        .network((n) => n.policy(policy).maxTcpConnections(0).maxUdpConnections(7).dnsRebindProtection(false).strict(false));
       if (method === "restore") await builder.restore();
       else await (await builder.restoreWithProgress()).awaitSandbox();
       expect(native.controls.mock.calls).toEqual([
         ["networkPolicy", policy], ["maxTcpConnections", 0], ["maxUdpConnections", 7],
-        ["dnsRebindProtection", false],
+        ["dnsRebindProtection", false], ["strict", false],
       ]);
     });
     for (const tcpMethod of ["maxTcpConnections", "maxConnections"] as const) {

@@ -995,6 +995,7 @@ policy(policy: NetworkPolicy | NetworkPolicyBuilder): this
 maxTcpConnections(count: number): this
 maxUdpConnections(count: number): this
 dnsRebindProtection(enabled: boolean): this
+strict(enabled: boolean): this
 ```
 
 Omitted settings use destination defaults, not the source sandbox's settings. `networkPolicy()`, `maxTcpConnections()` and `maxUdpConnections()` on `RestoreBuilder` set the same values.

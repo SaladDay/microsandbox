@@ -274,10 +274,10 @@ describe("RestoreBuilder.network()", () => {
 
     expect(builder.network((n) => {
       scope = n;
-      return n.policy(NetworkPolicy.none()).maxTcpConnections(8).maxUdpConnections(0).dnsRebindProtection(false);
+      return n.policy(NetworkPolicy.none()).maxTcpConnections(8).maxUdpConnections(0).dnsRebindProtection(false).strict(false);
     })).toBe(builder);
     for (const name in scope) names.push(name);
-    expect(names.sort()).toEqual(["dnsRebindProtection", "maxTcpConnections", "maxUdpConnections", "policy"]);
+    expect(names.sort()).toEqual(["dnsRebindProtection", "maxTcpConnections", "maxUdpConnections", "policy", "strict"]);
 
     // Policy validation matches the flat setter: only default actions and rules.
     builder.network((n) => {
