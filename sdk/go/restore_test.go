@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -97,10 +98,27 @@ func TestRestoreConnectionLimitsPreserveExplicitZero(t *testing.T) {
 	}
 }
 
+func TestRestoreNetworkMatchesFlatOptions(t *testing.T) {
+	tcp, udp := uint(8), uint(0)
+	var flat, scoped RestoreConfig
+	for _, option := range []RestoreOption{
+		WithRestoreNetworkPolicy(NetworkPolicy.None()), WithRestoreMaxTCPConnections(tcp),
+		WithRestoreMaxUDPConnections(udp), WithRestoreNetwork(RestoreNetworkOptions{}),
+	} {
+		option(&flat)
+	}
+	WithRestoreNetwork(RestoreNetworkOptions{
+		Policy: NetworkPolicy.None(), MaxTCPConnections: &tcp, MaxUDPConnections: &udp,
+	})(&scoped)
+	if !reflect.DeepEqual(flat, scoped) {
+		t.Fatalf("scoped network = %#v, want %#v", scoped, flat)
+	}
+}
+
 func TestRestoreDNSRebindProtectionReachesFFI(t *testing.T) {
 	for _, enabled := range []bool{false, true} {
 		var config RestoreConfig
-		WithRestoreDNSRebindProtection(enabled)(&config)
+		WithRestoreNetwork(RestoreNetworkOptions{DNSRebindProtection: &enabled})(&config)
 		if err := validateRestoreConfig(config); err != nil {
 			t.Fatal(err)
 		}

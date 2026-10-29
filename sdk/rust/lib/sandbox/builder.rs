@@ -2985,7 +2985,7 @@ mod tests {
             (
                 crate::Sandbox::restore("saved")
                     .name("child")
-                    .dns_rebind_protection(false),
+                    .network(|network| network.dns_rebind_protection(false)),
                 false,
             ),
         ] {

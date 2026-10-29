@@ -113,7 +113,7 @@ fn builder(name: String, opts: &RestoreOptions) -> Result<RestoreBuilder, FfiErr
         builder = builder.max_udp_connections(count);
     }
     if let Some(enabled) = opts.dns_rebind_protection {
-        builder = builder.dns_rebind_protection(enabled);
+        builder = builder.network(|network| network.dns_rebind_protection(enabled));
     }
     if opts.disable_network {
         builder = builder.disable_network();

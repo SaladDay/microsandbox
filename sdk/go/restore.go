@@ -58,6 +58,20 @@ type RestoreConfig struct {
 	Vsock                    []VsockRoute
 }
 
+// RestoreNetworkOptions groups the destination network settings a restore can change.
+// Omitted settings use destination defaults, not the source sandbox's settings.
+type RestoreNetworkOptions struct {
+	// Policy accepts only Rules, DefaultEgress, and DefaultIngress.
+	Policy *NetworkConfig
+	// MaxTCPConnections caps destination TCP connections; zero means unlimited.
+	MaxTCPConnections *uint
+	// MaxUDPConnections caps destination UDP relay sessions; zero means unlimited.
+	MaxUDPConnections *uint
+	// DNSRebindProtection enables or disables rebind protection on the destination resolver.
+	// Disable it to let hostnames resolve to private addresses, with the policy deciding.
+	DNSRebindProtection *bool
+}
+
 // RestoreSandbox restores an installed snapshot or archive into a detached sandbox.
 // Close releases the handle; use Stop or Destroy to stop the restored VM.
 func RestoreSandbox[T SnapshotSeed](ctx context.Context, snapshot T, name string, opts ...RestoreOption) (*Sandbox, error) {
@@ -112,10 +126,23 @@ func WithRestoreMaxUDPConnections(count uint) RestoreOption {
 	return func(o *RestoreConfig) { o.MaxUDPConnections = &count }
 }
 
-// WithRestoreDNSRebindProtection enables or disables DNS rebind protection on the destination.
-// Disable it to let hostnames resolve to private addresses, with the network policy deciding.
-func WithRestoreDNSRebindProtection(enabled bool) RestoreOption {
-	return func(o *RestoreConfig) { o.DNSRebindProtection = &enabled }
+// WithRestoreNetwork sets destination network overrides in one scope.
+// Nil fields leave the matching setting unchanged.
+func WithRestoreNetwork(network RestoreNetworkOptions) RestoreOption {
+	return func(o *RestoreConfig) {
+		if network.Policy != nil {
+			o.NetworkPolicy = network.Policy
+		}
+		if network.MaxTCPConnections != nil {
+			o.MaxTCPConnections = network.MaxTCPConnections
+		}
+		if network.MaxUDPConnections != nil {
+			o.MaxUDPConnections = network.MaxUDPConnections
+		}
+		if network.DNSRebindProtection != nil {
+			o.DNSRebindProtection = network.DNSRebindProtection
+		}
+	}
 }
 
 // WithRestoreMaxInboundTCPConnections caps active inbound TCP connections; zero is unlimited.
